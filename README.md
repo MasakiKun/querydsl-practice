@@ -2,7 +2,7 @@
 
 QueryDSL을 한번 써보려고 했는데, 인터넷에서 돌고있는 문서들은 내 입장에서는 아래와 같은 문제점이 있었다.
 
-  * Spring Framework 없이 일단 Plain하게 QueryDSL을 써보려고 했는데, 대부분의 문서가 Spring JPA나 SpringBoot와 함께 진행하는 문서였다.
+  * 일단 Plain하게 Spring Framework 없이 QueryDSL을 써보려고 했는데, 대부분의 문서가 Spring JPA나 SpringBoot와 함께 진행하는 문서였다.
   * QueryDSL 쿼리 클래스를 자동 생성하는데에도 아래와 같은 문제가 있었다.
     * 공식 문서에는 Maven의 JPAAnnotationProcessor 플러그인을 이용해서 쿼리 타입 클래스를 자동 생성하는 방법이 설명되어 있었는데,
       나는 빌드툴을 Gradle을 사용하기 때문에 적용할 수 없었다.
@@ -22,9 +22,9 @@ QueryDSL을 한번 써보려고 했는데, 인터넷에서 돌고있는 문서�
 	compileOnly("com.querydsl:querydsl-apt:4.2.1:jpa")
 
 여기 ```querydsl-apt```의 APT란 ```Annotation Processor Tool```의 약자로써, 어노테이션을 이용해서 특정한 처리를 해주는 툴을 이야기한다.
-많이들 사용하는 [Lombok](https://projectlombok.org/) 같은 것들이 APT를 이용해서 자동으로 코드를 생성한다.
+많이들 사용하는 [Lombok](https://projectlombok.org/) 같은 것들이 자동으로 코드를 생성해주는 APT라고 할 수 있다.
 
-위 의존성을 추가하면, 프로잭트 내 전체 클래스 중 ```@Entity``` 어노테이션이 붙은 클래스들을 모두 읽어들여, 클래스 이름 앞에 ```Q```가 붙은
+위 의존성을 추가하면, 프로젝트 내 전체 클래스 중 ```@Entity``` 어노테이션이 붙은 클래스들을 찾아서, 이 클래스 이름 앞에 ```Q```가 붙은
 QueryDSL 쿼리 타입의 클래스를 생성해준다.
 
 Lombok 라이브러리가```@Getter```나 ```@Setter```, ```@ToString``` 어노테이션이 붙은 시그니처를 찾아내,
@@ -40,12 +40,12 @@ Lombok 라이브러리가```@Getter```나 ```@Setter```, ```@ToString``` 어노�
 	
 	idea {
 		module {
-			// 자동 생성된 쿼리타입 클래스들을 프로젝트 소스셋에 추가해준다
+			// 자동 생성된 쿼리타입 클래스들을 프로젝트 소스셋에 추가한다
 			sourceDirs += file("generated/")
 		}
 	}
 
-그런데 위 의존성만 추가해서는 인텔리제이에서 엔티티의 쿼리 타입 클래스가 인식되지 않는다.
+그런데 위 설정만 가지고는 인텔리제이에서 엔티티의 쿼리 타입 클래스가 인식되지 않는다.
 
 이 문제에 대해서는 아래 웹문서를 참고했다.
 
