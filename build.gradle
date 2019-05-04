@@ -22,7 +22,7 @@ repositories {
 
 dependencies {
 	compile("com.querydsl:querydsl-jpa:4.2.1")
-	compile("com.querydsl:querydsl-apt:4.2.1:jpa")
+	compileOnly("com.querydsl:querydsl-apt:4.2.1:jpa")
 	compile("org.hibernate:hibernate-entitymanager:5.4.2.Final")
 	compile("com.h2database:h2:1.4.199")
 }
