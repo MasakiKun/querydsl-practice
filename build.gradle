@@ -1,18 +1,26 @@
 plugins {
 	id("java")
-	id("idea")
 }
 
 group "kr.ayukawa"
 
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
+
+def annotationProcessorGenerationSourcePath = file("/generated")
 
 [compileJava, compileTestJava]*.options*.encoding = "UTF-8"
+compileJava.options.annotationProcessorGeneratedSourcesDirectory = annotationProcessorGenerationSourcePath
 
-idea {
-	module {
-		sourceDirs += file("generated/")
+clean.doLast {
+	annotationProcessorGenerationSourcePath.deleteDir()
+}
+
+sourceSets {
+	main {
+		java {
+			srcDirs += annotationProcessorGenerationSourcePath
+		}
 	}
 }
 
@@ -21,8 +29,16 @@ repositories {
 }
 
 dependencies {
+	compile("javax.annotation:javax.annotation-api:1.3.2")
 	compile("com.querydsl:querydsl-jpa:4.2.1")
 	compileOnly("com.querydsl:querydsl-apt:4.2.1:jpa")
 	compile("org.hibernate:hibernate-entitymanager:5.4.2.Final")
-	compile("com.h2database:h2:1.4.199")
+//	compile("com.h2database:h2:1.4.199")
+	annotationProcessor(
+		"javax.annotation:javax.annotation-api:1.3.2",
+		"org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.2.Final",
+		"com.querydsl:querydsl-apt:4.2.1:jpa"
+	)
 }
+
+println(compileJava.options.annotationProcessorGeneratedSourcesDirectory.toString())
