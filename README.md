@@ -1,78 +1,144 @@
-# QueryDSL with Gradle and IntelliJ IDEA without Spring Framework
+# QueryDSL with Gradle without Spring Framework
 
-QueryDSL을 한번 써보려고 했는데, 인터넷에서 돌고있는 문서들은 내 입장에서는 아래와 같은 문제점이 있었다.
+*이틀 전에 작성했던 문서대로 다시 해보니까 안되서😒 새로 작성한다. ~~아오빡쳐~~*
 
-  * 일단 Plain하게 Spring Framework 없이 QueryDSL을 써보려고 했는데, 대부분의 문서가 Spring JPA나 SpringBoot와 함께 진행하는 문서였다.
-  * QueryDSL 쿼리 클래스를 자동 생성하는데에도 아래와 같은 문제가 있었다.
-    * 공식 문서에는 Maven의 JPAAnnotationProcessor 플러그인을 이용해서 쿼리 타입 클래스를 자동 생성하는 방법이 설명되어 있었는데,
-      나는 빌드툴을 Gradle을 사용하기 때문에 적용할 수 없었다.
-    * 몇몇 Gradle용 QueryDSL 플러그인을 사용하는 문서를 보았는데, 나는 요즘 빌드 스크립트를 짤 때 KotlinDSL을 사용하고 있고,
-      이 KotlinDSL이 익숙하지 못하기 때문에(...) 플러그인의 환경설정을 할 수 없었다.
-    * 또 다른 몇몇 문서는 쿼리 타입 클래스를 생성해주는 Gradle용 전용 Task를 만들고 compile Task가 이 Task에 의존성을 갖도록 설정하는 것도 있었는데,
-      솔직히 그냥 실습차 쓰는 마당에 딱히 Task를 만들고 싶지 않았다 (......)
+일단 QueryDSL을 사용하기 위한 의존성을 추가한다.
 
-그런 연유로 검색을 계속하다가 아래와 같이 진행해서 성공했기에 기록차 남겨둔다.
+	dependencies {
+		// ...blahblah...
+		compile("com.querydsl:querydsl-jpa:4.2.1")
+		compileOnly("com.querydsl:querydsl-apt:4.2.1:jpa")
+	}
 
-기본적으로는 아래 웹문서를 참고했다
+위앳것은 JPA 환경에서 QueryDSL을 사용하기 위한 API이다.
 
-* [How to use QueryDSL with JPA, Gradle and IDEA](http://bsideup.blogspot.com/2015/04/querydsl-with-gradle-and-idea.html)
+아랫것은 ```@Entity``` 어노테이션을 스캔해서, 해당 클래스 이름 앞에 ```Q```가 붙은 QueryDSL 쿼리 타입 클래스를
+자동으로 생성해주는 APT이다.
 
-```gradle.build``` 파일에 아래 의존성을 추가한다.
+의존성을 추가했다면 어노테이션 프로세서를 실행하도록 설정해야 하는데, 이건 두가지 케이스가 있다.
 
-	compileOnly("com.querydsl:querydsl-apt:4.2.1:jpa")
+## Gradle을 빌드툴로 사용하고, 빌드 과정을 전부 Gradle에 위임하는 경우
 
-여기 ```querydsl-apt```의 APT란 ```Annotation Processor Tool```의 약자로써, 어노테이션을 이용해서 특정한 처리를 해주는 툴을 이야기한다.
-많이들 사용하는 [Lombok](https://projectlombok.org/) 같은 것들이 자동으로 코드를 생성해주는 APT라고 할 수 있다.
+![Gradle로 빌드를 진행하는 IntelliJ IDEA 설정](images/001_using_gradle.png)
 
-위 의존성을 추가하면, 프로젝트 내 전체 클래스 중 ```@Entity``` 어노테이션이 붙은 클래스들을 찾아서, 이 클래스 이름 앞에 ```Q```가 붙은
-QueryDSL 쿼리 타입의 클래스를 생성해준다.
+인텔리제이를 기준으로, 환경설정(맥OS 기준으로 Cmd + ,)의
+```Settings``` > ```Build, Execution, Deployment``` > ```Build Tools``` > ```Gradle``` 페이지의
+```Delegate settings``` > ```Build and run using``` 설정이 ```Gradle```로 되어있는 경우, 인텔리제이는 빌드 과정을 모두
+Gradle에게 위임한다.
 
-Lombok 라이브러리가```@Getter```나 ```@Setter```, ```@ToString``` 어노테이션이 붙은 시그니처를 찾아내,
-자동으로 코드를 생성해주는 것과 같은 역할을 한다고 보면 되겠다.
+이 경우에는 Gradle의 빌드 스크립트에 어노테이션 프로세서 설정을 직접 해 줘야 한다.
 
-그리고 QueryDSL의 APT가 자동으로 생성해주는 쿼리타입 클래스를 사용할 수 있도록, ```build.gradle``` 파일에 아래 설정을 추가한다.
+일단 build.gradle 파일의 ```dependencies``` 항목에 어노테이션 프로세서 설정을 한다.
 
-	plugins {
-		id("idea")			// 인텔리제이 플러그인 추가
+	dependencies {
+		// ...blahblah...
+		compile("com.querydsl:querydsl-jpa:4.2.1")
+		compileOnly("com.querydsl:querydsl-apt:4.2.1:jpa")
+		// 어노테이션 프로세서 등록
+		annotationProcessor(
+			"javax.persistence:javax.persistence-api:2.2",
+			"com.querydsl:querydsl-apt:4.2.1:jpa"
+		)
+	}
+
+```dependencies.annotationProcessor```는 이름 그대로, 추가된 라이브러리들 중 APT인 것을 등록한다.
+여기서 주의할 것이, 어노테이션 프로세싱이 진행될 때의 의존성 스코프는 컴파일 때와는 스코프가 다르기 때문에,
+APT에 어노테이션 라이브러리가 포함되지 않았다면, 해당하는 어노테이션 라이브러리도 추가해야 한다.
+
+위 설정에서는 QueryDSL-APT 외에, JPA-API 라이브러리도 별도로 등록하는 것을 볼 수 있다.
+JPA-API 라이브러리는 취향에 따라 하이버네이트 구현체(```org.hibernate.javax.persistence:hibernate-jpa-2.1-api```) 등을
+등록해도 관계 없다.
+
+어노테이션 프로세서를 등록했다면, 어노테이션 프로세서 관련 설정을 해야 한다.
+
+아래 스크립트를 ```build.gradle``` 파일에 추가한다.
+
+	def generationPath = file("generated/")
+	
+	// 어노테이션 프로세서에 의해 자동 생성된 소스코드가 저장될 경로 지정
+	compileJava {
+		options.annotationProcessorGeneratedSourcesDirectory = generationPath
 	}
 	
-	// ...생략...
+	// clean Task 실행시에 자동 생성된 소스코드를 모두 삭제한다
+	clean.doLast {
+		generationPath.deleteDir()
+	}
 	
-	idea {
-		module {
-			// 자동 생성된 쿼리타입 클래스들을 프로젝트 소스셋에 추가한다
-			sourceDirs += file("generated/")
+	// 자동 생성된 소스코드의 경로도 소스셋에 포함한다
+	sourceSets {
+		main {
+			java {
+				srcDirs += generationPath
+			}
 		}
 	}
 
-그런데 위 설정만 가지고는 인텔리제이에서 엔티티의 쿼리 타입 클래스가 인식되지 않는다.
+위와 같이 설정한 후, ```build``` 태스크를 실행하면 프로젝트 하위에 ```generated```라는 폴더가 생성되고,
+```@Entity``` 클래스들과 동일한 패키지 경로에 QueryDSL 쿼리 타입 클래스의 소스 코드가 생성된다.
 
-이 문제에 대해서는 아래 웹문서를 참고했다.
+```generated``` 폴더는 자동 생성되는 경로이고, 이 폴더 안의 소스 코드도 자동 생성되는 코드이므로 이 경로는 따로
+버전관리를 할 필요가 없다. 사용하는 버전관리 시스템에 맞춰서, 자동 생성 소스코드 경로를 버전관리 제외하도록 한다.
 
-* [QueryDSL + JPA + Gradle in IntelliJ](http://izeye.blogspot.com/2015/09/querydsl-jpa-gradle-in-intellij.html)
+## Gradle은 사용하지만, 빌드 과정을 인텔리제이에 위임하는 경우
 
-인텔리제이의 환경설정(맥OS 기준으로 Cmd + ,)에서 아래 설정을 변경해준다.
+![빌드에 Gradle을 사용하지 않는 IntelliJ IDEA 설정](images/001_using_gradle.png)
 
-```Build, Execution, Deployment``` > ```Compiler``` > ```Annotation Processors``` 설정에서
-```Enable annotation processing``` 항목을 찾아서 활성화 시켜주고,
-해당 설정 페이지에서 ```Store generated sources relative to:``` 항목을 찾아서 해당 항목의 설정을  ```Module content root```로 변경해준다.
+인텔리제이를 기준으로, 환경설정(맥OS 기준으로 Cmd + ,)의
+```Settings``` > ```Build``` > ```Build Tools``` > ```Gradle``` 페이지의
+```Delegate settings``` > ```Build and run using``` 설정이 ```IntelliJ IDEA```로 되어있는 경우,
+의존성 관리 등은 Gradle을 사용하지만, 컴파일 등 빌드 과정은 인텔리제이가 수행한다.
 
-위 설정까지 끝나면 프로젝트에서 쿼리타입 클래스를 사용할 수 있다.
+이 경우에는 인텔리제이가 직접 어노테이션 프로세서를 실행하도록 설정해줘야 한다.
 
-	@Entity
-	public class Member {
-		/// blahblah
+![IntelliJ IDEA의 Annotation Processor 설정](images/003_intellij_annotation_processor_setting.png)
+
+```Settings``` > ```Build, Execution, Deployment``` > ```Compiler``` > ```Annotation Processors``` 페이지에서
+```Enable annotation processing``` 항목을 활성화해주고,
+```Store generated sources relative to:``` 항목의 값을 ```Module content root```로 변경한다.
+
+(설정을 변경해야 할 부분에 음영 처리를 해 두었다)
+
+이 상태로 메뉴의 ```Build``` > ```Rebuild Project``` 를 선택해서 새로 빌드하면 QueryDSL 타입의 클래스의 소스 코드가
+생성된다.
+
+그런데 이렇게 이렇게 생성된 QueryDSL 타입의 클래스를 소스 코드에서 사용할 수가 없는데, 자동 생성된 소스 코드들을
+소스셋에 포함시켜줘야 하기 때문이다.
+
+Project Structure > Modules 설정에서 ```generated``` 경로를 소스셋에 포함시켜 주거나, 빌드 과정을 Gradle에게 위임하는
+경우 항목에서 설졍한 SourceSets 항목을 build.gradle 파일에 추가해주고 Gradle 설정을 새로 적용해주면 해결된다.
+
+	sourceSets {
+		main {
+			java {
+				srcDirs += generationPath
+			}
+		}
 	}
-	
-	......
-	
-	QMember member = QMember.member;
 
-~~아오, 인텔리제이에서 JavaFX 쓸때도 프로젝트 환경설정 따로 해줘야 하더니, QueryDSL 쓸때 또...!~~
+자동 생성된 소스 코드의 경로를 포함하는 과정은 생략한다.
 
-## 문제점
+```generated``` 폴더는 자동 생성되는 경로이고, 이 폴더 안의 소스 코드도 자동 생성되는 코드이므로 이 경로는 따로
+버전관리를 할 필요가 없다. 사용하는 버전관리 시스템에 맞춰서, 자동 생성 소스코드 경로를 버전관리 제외하도록 한다.
 
-* 순전히 Gradle + IntelliJ 환경에서만 테스트해본거라서, 이클립스에서는 이 설정대로 안될지도 모르겠다.
-  이때는, APT에 의해서 자동 생성된 generated 폴더를 프로젝트 소스 폴더로 직접 수동으로 추가해주면 될 것 같다.
-* 자바9 이후부터 APT 쓸때마다 계속 겪는 문제지만, 9 이후부터는 모듈 시스템 때문에 APT가 어노테이션을 읽어들이지 못하고 컴파일 타임에 오류가 난다.
-  그냥 자바8을 이용해서 개발하거나, ```module-info.java``` 파일을 생성해서 QueryDSL-APT가 패키지를 읽어들일 수 있도록 설정해주면 해결될 것 같긴 하다.
+개인적으로는 build.gradle 파일에 어노테이션 프로세서 설정을 하는 것이, 설정 파일 한번 변경으로 간단하게 해결이 되므로,
+그쪽 방법이 더 편리하다고 생각된다.
+
+## Java9 이상을 이용하는 경우
+
+자바 9 이상을 이용하는 경우, ```Caused by: java.lang.NoClassDefFoundError: javax/annotation/Generated``` 예외가 발생한다.
+
+이때는 ```javax.annotation:javax.annotation-api:1.3.2``` 의존성을 추가하고, 이 의존성을 APT에 등록한 뒤 빌드 과정을
+진행하면 문제없이 빌드가 진행된다.
+
+	dependencies {
+		// ...blahblah...
+		compile("javax.annotation:javax.annotation-api:1.3.2")
+		compile("com.querydsl:querydsl-jpa:4.2.1")
+		compileOnly("com.querydsl:querydsl-apt:4.2.1:jpa")
+		annotationProcessor(
+			"javax.annotation:javax.annotation-api:1.3.2",
+			"javax.persistence:javax.persistence-api:2.2",
+			"com.querydsl:querydsl-apt:4.2.1:jpa"
+		)
+	}

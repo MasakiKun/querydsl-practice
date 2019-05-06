@@ -7,19 +7,20 @@ group "kr.ayukawa"
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
 
-def annotationProcessorGenerationSourcePath = file("/generated")
+def generationPath = file("generated/")
 
-[compileJava, compileTestJava]*.options*.encoding = "UTF-8"
-compileJava.options.annotationProcessorGeneratedSourcesDirectory = annotationProcessorGenerationSourcePath
+compileJava {
+	options.annotationProcessorGeneratedSourcesDirectory = generationPath
+}
 
 clean.doLast {
-	annotationProcessorGenerationSourcePath.deleteDir()
+	generationPath.deleteDir()
 }
 
 sourceSets {
 	main {
 		java {
-			srcDirs += annotationProcessorGenerationSourcePath
+			srcDirs += generationPath
 		}
 	}
 }
@@ -35,7 +36,7 @@ dependencies {
 	compile("org.hibernate:hibernate-entitymanager:5.4.2.Final")
 	annotationProcessor(
 		"javax.annotation:javax.annotation-api:1.3.2",
-		"org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.2.Final",
+		"javax.persistence:javax.persistence-api:2.2",
 		"com.querydsl:querydsl-apt:4.2.1:jpa"
 	)
 }
