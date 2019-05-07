@@ -109,8 +109,9 @@ JPA-API 라이브러리는 취향에 따라 하이버네이트 구현체(```org.
 그런데 이렇게 이렇게 생성된 QueryDSL 타입의 클래스를 소스 코드에서 사용할 수가 없는데, 자동 생성된 소스 코드들을
 소스셋에 포함시켜줘야 하기 때문이다.
 
-Project Structure > Modules 설정에서 ```generated``` 경로를 소스셋에 포함시켜 주거나, 빌드 과정을 Gradle에게 위임하는
-경우 항목에서 설졍한 SourceSets 항목을 build.gradle 파일에 추가해주고 Gradle 설정을 새로 적용해주면 해결된다.
+```Project Structure``` > ```Modules``` 설정에서 ```generated``` 경로를 소스셋에 포함시켜 주거나, 바로 위에 작성한
+```Gradle을 빌드툴로 사용하고, 빌드 과정을 전부 Gradle에 위임하는 경우``` 항목에서 설명한 SourceSets 항목을 build.gradle 파일에 추가해주고
+Gradle 설정을 새로 적용해주면 해결된다.
 
 	sourceSets {
 		main {
